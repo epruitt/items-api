@@ -39,5 +39,30 @@ export class ItemsApiStack extends cdk.Stack {
     //Permissions
     itemsTable.grantReadWriteData(apiHandler);
 
+    // API Gateway
+    const api = new apigateway.RestApi(this, 'ItemsApi', {
+      restApiName: 'Items Service',
+      description: 'CRUD API for items, built with AWS CDK, Lambda, and DynamoDB',
+    });
+
+    //forward all requests to the Lambda function
+    const integration = new apigateway.LambdaIntegration(apiHandler);
+
+    //routes
+    const items = api.root.addResource('items');
+    items.addMethod('GET', integration); // GET /items
+    items.addMethod('POST', integration); // POST /items
+
+    const item = items.addResource('{id}');
+    item.addMethod('GET', integration); // GET /items/{id}
+    item.addMethod('PUT', integration); // PUT /items/{id}
+    item.addMethod('DELETE', integration); // DELETE /items/{id}
+
+    //output the API endpoint as a CloudFormation output
+    new cdk.CfnOutput(this, 'ApiEndpoint', {
+      value: api.url,
+      exportName: 'ApiEndpoint',
+    });
+
   }
 }
